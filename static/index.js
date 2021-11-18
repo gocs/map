@@ -17,7 +17,11 @@ d3.json('land.json')
                               .attr("stroke-width", graph.circle.stroke_width))
       .on("drag", (event, d) => (d.x = event.x, d.y = event.y))
       .on("end", (_, d) => {
-        console.log(d);
+        fetch('/landjson', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(d),
+          }).catch(error => console.error('Error:', error));
         return circle.filter(p => p === d).attr("stroke", "none")
       })
       .on("start.update drag.update end.update", update)
