@@ -37,7 +37,11 @@ type Line struct {
 	StrokeWidth int    `json:"stroke_width"`
 }
 
-type Land struct {
+type Deleter struct {
+	NodeID int `json:"id"`
+}
+
+type Map struct {
 	Nodes   []Node  `json:"nodes"`
 	Circle  Circle  `json:"circle"`
 	Options Options `json:"options"`
@@ -53,29 +57,52 @@ func main() {
 			return
 		}
 
-		l, err := getLand()
-		if err != nil {
-			log.Println("err getLand:", err)
-			return
-		}
-
 		var n Node
 
 		if err := json.NewDecoder(r.Body).Decode(&n); err != nil {
 			log.Println("err Decode:", err)
 			return
 		}
+		manageMap("./static/land.json", func(m Map) (Map, error) {
+			m.Nodes[n.NodeID] = n
+			return m, nil
+		})
+	})
 
-		l.Nodes[n.NodeID] = n
-		if err := json.NewEncoder(w).Encode(&n); err != nil {
-			log.Println("err Encode:", err)
+	http.HandleFunc("/appendcell", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
 			return
 		}
 
-		if err := setLand(l); err != nil {
-			log.Println("err setLand:", err)
+		var n Node
+		if err := json.NewDecoder(r.Body).Decode(&n); err != nil {
+			log.Println("err Decode:", err)
 			return
 		}
+		manageMap("./static/land.json", func(m Map) (Map, error) {
+			n.NodeID = len(m.Nodes)
+			m.Nodes = append(m.Nodes, n)
+			return m, nil
+		})
+	})
+
+	http.HandleFunc("/deletecell", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete {
+			return
+		}
+
+		var d Deleter
+		if err := json.NewDecoder(r.Body).Decode(&d); err != nil {
+			log.Println("err Decode:", err)
+			return
+		}
+		manageMap("./static/land.json", func(m Map) (Map, error) {
+			m.Nodes = append(m.Nodes[:d.NodeID], m.Nodes[d.NodeID+1:]...)
+			for i := 0; i < len(m.Nodes); i++ {
+				m.Nodes[i].NodeID = i
+			}
+			return m, nil
+		})
 	})
 
 	log.Println("Listening on :3000...")
@@ -84,30 +111,27 @@ func main() {
 	}
 }
 
-func getLand() (Land, error) {
-	f, err := os.Open("./static/land.json")
-	if err != nil {
-		return Land{}, err
-	}
-	defer f.Close()
-
-	byteValue, err := ioutil.ReadAll(f)
-	if err != nil {
-		return Land{}, err
-	}
-
-	var l Land
-	if err := json.Unmarshal([]byte(byteValue), &l); err != nil {
-		return Land{}, err
-	}
-	return l, nil
-}
-
-func setLand(l Land) error {
-	ba, err := json.Marshal(&l)
+func manageMap(filename string, handler func(m Map) (Map, error)) error {
+	f, err := os.Open(filename)
 	if err != nil {
 		return err
 	}
-
-	return os.WriteFile("./static/land.json", ba, 0644)
+	defer f.Close()
+	byteValue, err := ioutil.ReadAll(f)
+	if err != nil {
+		return err
+	}
+	var m Map
+	if err := json.Unmarshal([]byte(byteValue), &m); err != nil {
+		return err
+	}
+	m, err = handler(m)
+	if err != nil {
+		return err
+	}
+	ba, err := json.Marshal(&m)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(filename, ba, 0644)
 }

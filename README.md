@@ -1,10 +1,11 @@
 # Map
 
-handle zoom
-handle pan
-handle select
-handle drag
-handle line
-handle new shape
-handle save value
-handle load value
+
+## prerequisites
+
+go 1.x compiler
+
+## run
+
+go run .
+
