@@ -23,7 +23,7 @@ d3.json('land.json')
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({x: e.clientX, y: e.clientY, type: d.type}),
-        }).then((_, __) => window.location.reload()).catch(err => console.error('Error dblclick2addnodeE:', err))
+        }).then(_ => window.location.reload()).catch(err => console.error('Error dblclick2addnodeE:', err))
     };
 
     let dblclick2deletenodeE = {
@@ -31,7 +31,7 @@ d3.json('land.json')
         method: 'DELETE',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({id: d.id}),
-      }).then((_, __) => window.location.reload()).catch(err => console.error('Error dblclick2deletenodeE:', err))
+      }).then(_ => window.location.reload()).catch(err => console.error('Error dblclick2deletenodeE:', err))
     };
 
     let drag = d3.drag()
@@ -48,7 +48,7 @@ d3.json('land.json')
           }).catch(err => console.error('Error:', err));
         return circle.filter(p => p === d).attr("stroke", "none")
       })
-      .on("start.update drag.update end.update", update)
+      .on("start.update drag.update end.update", update);
 
     let zoom = d3.zoom()
       .scaleExtent([1, 5])
