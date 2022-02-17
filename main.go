@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/gocs/map/ws"
 )
 
 type Node struct {
@@ -105,8 +107,11 @@ func main() {
 		})
 	})
 
-	log.Println("Listening on :3000...")
-	if err := http.ListenAndServe(":3000", nil); err != nil {
+	http.HandleFunc("/updaterws", ws.UpdaterWS())
+
+	// my local 3000 is buzy 😂
+	log.Println("Listening on :3131...")
+	if err := http.ListenAndServe(":3131", nil); err != nil {
 		log.Fatal(err)
 	}
 }
