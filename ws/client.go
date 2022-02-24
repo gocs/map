@@ -1,14 +1,13 @@
-// Copyright 2013 The Gorilla WebSocket Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
 package ws
 
 import (
 	"bytes"
+	"encoding/json"
 	"log"
 	"time"
 
+	"github.com/gocs/map/models"
+	"github.com/gocs/map/store"
 	"github.com/gorilla/websocket"
 )
 
@@ -60,6 +59,9 @@ func (c *Client) readPump() {
 	c.conn.SetReadLimit(maxMessageSize)
 	c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
+
+	filename := "./static/land.json"
+
 	for {
 		_, message, err := c.conn.ReadMessage()
 		if err != nil {
@@ -68,6 +70,29 @@ func (c *Client) readPump() {
 			}
 			break
 		}
+
+		// yikes
+		node := &models.NodeRecv{}
+		if err := json.Unmarshal(message, node); err != nil {
+			c.conn.WriteMessage(websocket.CloseAbnormalClosure, []byte(err.Error()))
+			break
+		}
+
+		var fn func(m store.Map) (store.Map, error)
+		switch node.Action {
+		case "add":
+			fn = models.AddMap(*node)
+		case "del":
+			fn = models.DelMap(*node)
+		case "set":
+			fn = models.SetMap(*node)
+		}
+
+		if err := store.MapMap(filename, fn); err != nil {
+			log.Println("err MapMap:", err)
+			continue
+		}
+
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
 		c.hub.broadcast <- message
 	}
@@ -96,6 +121,7 @@ func (c *Client) writePump() {
 
 			w, err := c.conn.NextWriter(websocket.TextMessage)
 			if err != nil {
+				c.conn.WriteMessage(websocket.CloseAbnormalClosure, []byte(err.Error()))
 				return
 			}
 			w.Write(message)
@@ -108,11 +134,13 @@ func (c *Client) writePump() {
 			}
 
 			if err := w.Close(); err != nil {
+				c.conn.WriteMessage(websocket.CloseAbnormalClosure, []byte(err.Error()))
 				return
 			}
 		case <-ticker.C:
 			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				c.conn.WriteMessage(websocket.CloseAbnormalClosure, []byte(err.Error()))
 				return
 			}
 		}

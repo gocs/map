@@ -30,59 +30,113 @@ let map = {
 };
 
 (async _ => {
-  await map.newMap();
+  if (!window["WebSocket"]) return;
 
-  let map_d3 = d3
-    .select('svg g');
+  var conn = new WebSocket("ws://" + document.location.host + "/updaterws");
+  conn.onopen = async (ws, e) => {
+    console.log('success');
 
-  map_d3
-    .selectAll('circle')
-    .data(map.nodes, d => d.id)
-    .enter()
-    .append('circle')
-    .attr('r', map.circle.radius)
-    .style('fill', d => map.options.colors[d.type])
-    .attr('data-id', d => d.id)
-    .attr('cx', d => d.x)
-    .attr('cy', d => d.y);
+    await map.newMap();
 
-  // window.addEventListener("click", evt => {
-  //   console.log("click target:", evt.target);
-  // });
+    let map_d3 = d3.select('svg g');
+    let voronoi = d3.Delaunay.from(map.nodes, d => d.x, d => d.y)
+      .voronoi([0, 0, width, height]);
 
-  window.addEventListener("dblclick", evt => {
-    if (!evt.target.__data__) {
-      map.add({ id: 1, x: evt.clientX, y: evt.clientY, type: "untyped" });
-      
+    conn.onclose = evt => console.log("onclose evt:", evt);
+    conn.onmessage = async evt => {
+      let data = JSON.parse(evt.data);
+      console.log("onmessage data:", data);
 
-      map_d3
-        .selectAll('circle')
-        .data(map.nodes, d => d.id)
-        .enter()
-        .append('circle')
-        .attr('r', map.circle.radius)
-        .style('fill', d => map.options.colors[d.type])
-        .attr('data-id', d => d.id)
-        .attr('cx', d => d.x)
-        .attr('cy', d => d.y);
-      return;
-    }
-    map.del(evt.target.__data__.id);
+      if (!data) return; // no business
+
+      await map.newMap();
+
+      if (data.action === "add") {
+        map_d3
+          .selectAll('circle')
+          .data(map.nodes, d => d.id)
+          .enter()
+          .append('circle')
+          .attr('r', map.circle.radius)
+          .attr('data-id', d => d.id)
+          .attr('cx', d => d.x)
+          .attr('cy', d => d.y);
+      } else if (data.action === "del") {
+        map_d3
+          .selectAll('circle')
+          .data(map.nodes, d => d.id)
+          .exit()
+          .remove();
+      }
+    };
 
     map_d3
       .selectAll('circle')
       .data(map.nodes, d => d.id)
-      .exit()
-      .remove();
-  });
+      .enter()
+      .append('circle')
+      .attr('r', map.circle.radius)
+      .attr('data-id', d => d.id)
+      .attr('cx', d => d.x)
+      .attr('cy', d => d.y);
 
-  // window.addEventListener("mouseover", evt => {
-  //   console.log("mouseover target:", evt.target);
-  // })
-  // window.addEventListener("mouseout", evt => {
-  //   console.log("mouseout target:", evt.target);
-  // })
+    let drag = d3.drag()
+      .on("start", (_, d) => circle.filter(p => p === d)
+        .raise()
+        .attr("stroke", "black")
+        .attr("stroke-width", map.circle.stroke_width))
+      .on("drag", (event, d) => (d.x = event.x, d.y = event.y))
+      .on("end", (_, d) => {
+        conn.send(JSON.stringify({ action: "set", ...d }));
+        return circle.filter(p => p === d).attr("stroke", "none")
+      })
+      .on("start.update drag.update end.update", update);
 
+    // render
+    let mesh = map_d3
+      .append("path")
+      .attr("fill", "black")
+      .attr("stroke", map.line.color)
+      .attr("stroke-width", map.line.stroke_width)
+      .attr("d", voronoi.render());
+
+    let cell = map_d3
+      .append("g")
+      .attr("fill", "none")
+      .attr("pointer-events", "all")
+      .selectAll("path")
+      .data(map.nodes, d => d.id).join("path")
+      .attr("fill", (d, i) => map.options.colors[d.type])
+      .attr("d", (d, i) => voronoi.renderCell(i));
+
+    let circle = map_d3
+      .selectAll("circle")
+      .data(map.nodes, d => d.id).join("circle")
+      .attr("cx", d => d.x)
+      .attr("cy", d => d.y)
+      .attr("r", 0)
+      .call(drag)
+      .attr("fill", "black");
+
+    function update() {
+      voronoi = d3.Delaunay.from(map.nodes, d => d.id, d => d.x, d => d.y).voronoi([0, 0, width, height]);
+      cell
+        .attr("fill", (d, _) => map.options.colors[d.type])
+        .attr("d", (_, i) => voronoi.renderCell(i));
+      mesh.attr("d", voronoi.render());
+      circle.attr("cx", d => d.x).attr("cy", d => d.y);
+    }
+
+    window.addEventListener("dblclick", evt => {
+      let payload = "";
+      if (!evt.target.__data__) {
+        payload = { action: "add", x: evt.clientX, y: evt.clientY, type: "forest" };
+      } else {
+        payload = { action: "del", id: evt.target.__data__.id };
+      }
+      conn.send(JSON.stringify(payload));
+    });
+  };
 })();
 
 
