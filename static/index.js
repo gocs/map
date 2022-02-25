@@ -24,7 +24,6 @@ let map = {
     this.nodes[mesh.id] = mesh;
   },
   del(id) {
-    // this.nodes = this.nodes.filter((d) => d.id != id);
     this.nodes.splice(id, 1);
   },
 };
