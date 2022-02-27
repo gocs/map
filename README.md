@@ -10,7 +10,9 @@ go 1.x compiler
 
 ## run
 
-go run .
+```
+go run main.go
+```
 
 then go to http://localhost:3131/
 
