@@ -5,11 +5,11 @@ import (
 )
 
 type NodeRecv struct {
-	Action string `json:"action"`
-	ID     int    `json:"id"`
-	X      int    `json:"x"`
-	Y      int    `json:"y"`
-	Type   string `json:"type"`
+	Action string  `json:"action"`
+	ID     int     `json:"id"`
+	X      float32 `json:"x"`
+	Y      float32 `json:"y"`
+	Type   string  `json:"type"`
 }
 
 // AddMap adds new node
@@ -58,11 +58,16 @@ func filter(ss []store.Node, h func(store.Node) bool) []store.Node {
 
 func SetMap(node NodeRecv) func(m store.Map) (store.Map, error) {
 	return func(m store.Map) (store.Map, error) {
-		m.Nodes[node.ID] = store.Node{
-			ID:   node.ID,
-			X:    node.X,
-			Y:    node.Y,
-			Type: node.Type,
+		for i, n := range m.Nodes {
+			if n.ID == node.ID {
+				m.Nodes[i] = store.Node{
+					ID:   node.ID,
+					X:    node.X,
+					Y:    node.Y,
+					Type: node.Type,
+				}
+				break
+			}
 		}
 		return m, nil
 	}

@@ -86,6 +86,9 @@ func (c *Client) readPump() {
 			fn = models.DelMap(*node)
 		case "set":
 			fn = models.SetMap(*node)
+		default:
+			log.Println("err missing fn:")
+			continue
 		}
 
 		if err := store.MapMap(filename, fn); err != nil {

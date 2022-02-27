@@ -7,10 +7,10 @@ import (
 )
 
 type Node struct {
-	ID   int    `json:"id"`
-	X    int    `json:"x"`
-	Y    int    `json:"y"`
-	Type string `json:"type"`
+	ID   int     `json:"id"`
+	X    float32 `json:"x"`
+	Y    float32 `json:"y"`
+	Type string  `json:"type"`
 }
 
 type Circle struct {
