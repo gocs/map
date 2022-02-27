@@ -11,7 +11,7 @@ let map = {
   options: { colors: {} },
   line: {},
   async newMap() {
-    let graph = await d3.json('land.json');
+    let graph = await d3.json('land.json', { cache: "no-store" });
     this.nodes = graph.nodes;
     this.circle = graph.circle;
     this.options = graph.options;
