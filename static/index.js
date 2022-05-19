@@ -22,7 +22,7 @@ let map = {
 (async _ => {
   if (!window["WebSocket"]) return;
 
-  var conn = new WebSocket("ws://" + document.location.host + "/updaterws");
+  var conn = new WebSocket("wss://" + document.location.host + "/updaterws");
   conn.onopen = async (_) => {
 
     await map.newMap();

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/gocs/map/models"
@@ -33,6 +34,12 @@ var (
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool {
+		// TODO: SET-UP SECRETS FOR CODESPACES
+		// origin := r.Header.Get("Origin")
+		// // return origin == "localhost"
+		return true
+	},
 }
 
 // Client is a middleman between the websocket connection and the hub.
