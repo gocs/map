@@ -34,12 +34,11 @@ var (
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {
-		// TODO: SET-UP SECRETS FOR CODESPACES
-		// origin := r.Header.Get("Origin")
-		// // return origin == "localhost"
-		return true
-	},
+	// // TODO: SET-UP SECRETS FOR CODESPACES
+	// CheckOrigin: func(r *http.Request) bool {
+	// 	origin := r.Header.Get("Origin")
+	// 	return origin == "localhost"
+	// },
 }
 
 // Client is a middleman between the websocket connection and the hub.
