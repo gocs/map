@@ -27,11 +27,6 @@ const (
 	maxMessageSize = 512
 )
 
-var (
-	newline = []byte{'\n'}
-	space   = []byte{' '}
-)
-
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
@@ -67,18 +62,14 @@ func (c *Client) readPump() {
 
 	filename := "./static/land.json"
 
+	node := &models.NodeRecv{}
+	b := &bytes.Buffer{}
 	for {
-		_, message, err := c.conn.ReadMessage()
-		if err != nil {
+		if err := c.conn.ReadJSON(node); err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Printf("error: %v", err)
+				break
 			}
-			break
-		}
-
-		// yikes
-		node := &models.NodeRecv{}
-		if err := json.Unmarshal(message, node); err != nil {
 			c.conn.WriteMessage(websocket.CloseAbnormalClosure, []byte(err.Error()))
 			break
 		}
@@ -101,8 +92,12 @@ func (c *Client) readPump() {
 			continue
 		}
 
-		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		c.hub.broadcast <- message
+		if err := json.NewEncoder(b).Encode(&map[string]string{"action": node.Action}); err != nil {
+			log.Println("err Encode:", err)
+			continue
+		}
+		c.hub.broadcast <- b.Bytes()
+		b.Reset()
 	}
 }
 
@@ -137,7 +132,6 @@ func (c *Client) writePump() {
 			// Add queued chat messages to the current websocket message.
 			n := len(c.send)
 			for i := 0; i < n; i++ {
-				w.Write(newline)
 				w.Write(<-c.send)
 			}
 

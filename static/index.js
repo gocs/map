@@ -112,25 +112,26 @@ let map = {
         case "add":
           map_d3
             .selectAll('circle')
-            .data(map.nodes, d => d.id)
+            .data(map.nodes, d => `${d.id}`)
             .enter()
             .append('circle')
             .attr('r', map.circle.radius)
-            .attr('data-id', d => d.id)
+            .attr('data-id', d => `${d.id}`)
             .attr('cx', d => d.x)
             .attr('cy', d => d.y);
           break;
         case "del":
           map_d3
             .selectAll('circle')
-            .data(map.nodes, d => d.id)
+            .data(map.nodes, d => `${d.id}`)
             .exit()
             .remove();
           break;
         case "set":
           map_d3
             .selectAll('circle')
-            .data(map.nodes, d => d.id)
+            .data(map.nodes, d => `${d.id}`)
+            .attr('data-id', d => `${d.id}`)
             .attr("cx", d => d.x).attr("cy", d => d.y);
           break;
       }
