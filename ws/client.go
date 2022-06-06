@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gocs/map/models"
@@ -34,11 +35,9 @@ var (
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
-	// // TODO: SET-UP SECRETS FOR CODESPACES
-	// CheckOrigin: func(r *http.Request) bool {
-	// 	origin := r.Header.Get("Origin")
-	// 	return origin == "localhost"
-	// },
+	CheckOrigin: func(r *http.Request) bool {
+		return r.Header.Get("Origin") == os.Getenv("GOCS_MAP_ORIGIN")
+	},
 }
 
 // Client is a middleman between the websocket connection and the hub.
