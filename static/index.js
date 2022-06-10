@@ -53,17 +53,10 @@ let map = {
 
     let hover4circumcircleE = {
       mouseover: (_, d) => map_d3.selectAll("circle").filter(p => p === d).raise().attr("r", 2 * map.circle.radius),
-      mouseout: (_, d) => map_d3.selectAll("circle").filter(p => p === d).raise().attr("r", map.circle.radius)
+      mouseout: (_, d) => map_d3.selectAll("circle").filter(p => p === d).raise().attr("r", 0)
     };
 
     // render
-    let mesh = map_d3
-      .append("path")
-      .attr("fill", "black")
-      .attr("stroke", map.line.color)
-      .attr("stroke-width", map.line.stroke_width)
-      .attr("d", voronoi.render());
-
     let cell = map_d3
       .append("g")
       .attr("fill", "none")
@@ -81,7 +74,7 @@ let map = {
       .data(map.nodes, d => d.id)
       .enter()
       .append('circle')
-      .attr('r', map.circle.radius)
+      .attr('r', 0)
       .attr('data-id', d => d.id)
       .attr('cx', d => d.x)
       .attr('cy', d => d.y)
@@ -96,7 +89,6 @@ let map = {
       cell
         .attr("fill", (d, _) => map.options.colors[d.type])
         .attr("d", (_, i) => voronoi.renderCell(i));
-      mesh.attr("d", voronoi.render());
       circle.attr("cx", d => d.x).attr("cy", d => d.y).attr("fill", "black");
     }
 
@@ -104,6 +96,7 @@ let map = {
     conn.onerror = err => console.error("onerror err:", err);
     conn.onmessage = async evt => {
       let data = JSON.parse(evt.data);
+      location.reload()
 
       if (!data) return; // no business
       await map.newMap();
@@ -140,7 +133,6 @@ let map = {
       cell
         .attr("fill", (d, _) => map.options.colors[d.type])
         .attr("d", (_, i) => voronoi.renderCell(i));
-      mesh.attr("d", voronoi.render());
       circle.attr("cx", d => d.x).attr("cy", d => d.y);
     };
   };
