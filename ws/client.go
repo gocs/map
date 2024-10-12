@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"time"
@@ -31,7 +32,10 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
-		return r.Header.Get("Origin") == os.Getenv("GOCS_MAP_ORIGIN")
+		origin := r.Header.Get("Origin")
+		expected := os.Getenv("GOCS_MAP_ORIGIN")
+		slog.Info("check origin", "actual", origin, "expected", expected)
+		return origin == expected
 	},
 }
 
