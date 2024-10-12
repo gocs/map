@@ -1,5 +1,5 @@
 module github.com/gocs/map
 
-go 1.17
+go 1.23.1
 
 require github.com/gorilla/websocket v1.5.0
