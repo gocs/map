@@ -1,0 +1,13 @@
+services:
+  map:
+    build: .
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      - GOCS_MAP_ORIGIN=http://localhost:8080
+    networks:
+      - map-n
+
+networks:
+  map-n:
