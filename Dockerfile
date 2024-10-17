@@ -8,7 +8,7 @@ RUN npm install
 
 COPY ./static .
 
-CMD [ "npm", "run", "build" ]
+RUN npm run build
 
 FROM golang:1.23-alpine3.19
 
@@ -19,7 +19,8 @@ COPY go.mod go.sum ./
 RUN go mod download && go mod verify
 
 COPY . .
-COPY --from=static /usr/src/app/dist dist
+COPY --from=static /usr/src/app/dist static/dist
+
 RUN go build -v -o /usr/local/bin/app
 
 CMD ["app"]
