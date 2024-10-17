@@ -4,9 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"log"
-	"log/slog"
-	"net/http"
-	"os"
 	"time"
 
 	"github.com/gocs/map/models"
@@ -27,17 +24,6 @@ const (
 	// Maximum message size allowed from peer.
 	maxMessageSize = 512
 )
-
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {
-		origin := r.Header.Get("Origin")
-		expected := os.Getenv("GOCS_MAP_ORIGIN")
-		slog.Info("check origin", "actual", origin, "expected", expected)
-		return origin == expected
-	},
-}
 
 // Client is a middleman between the websocket connection and the hub.
 type Client struct {
@@ -64,7 +50,7 @@ func (c *Client) readPump() {
 	c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 
-	filename := "./static/land.json"
+	filename := "./land.json"
 
 	node := &models.NodeRecv{}
 	b := &bytes.Buffer{}
@@ -96,10 +82,11 @@ func (c *Client) readPump() {
 			continue
 		}
 
-		if err := json.NewEncoder(b).Encode(&map[string]string{"action": node.Action}); err != nil {
+		if err := json.NewEncoder(b).Encode(node); err != nil {
 			log.Println("err Encode:", err)
 			continue
 		}
+		node = &models.NodeRecv{}
 		c.hub.broadcast <- b.Bytes()
 		b.Reset()
 	}
