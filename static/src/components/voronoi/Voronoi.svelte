@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { Delaunay } from "d3-delaunay";
-    let svg: SVGSVGElement;
+    let svg: SVGSVGElement = $state();
     let width: number;
     let height: number;
     let points: [number, number][] = [];
@@ -135,4 +135,4 @@
     }
 </script>
 
-<svg bind:this={svg} class="w-full h-full" on:mousedown={handleDragStart}></svg>
+<svg bind:this={svg} class="w-full h-full" onmousedown={handleDragStart}></svg>
